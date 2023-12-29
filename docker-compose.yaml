@@ -1,31 +1,31 @@
-version: "3.8"
+version: '3.9'
+
 services:
-  mongodb:
-    image: mongo:5.0.2
-    restart: unless-stopped
-    env_file: ./.env
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=$DB_USER
-      - MONGO_INITDB_ROOT_PASSWORD=$DB_PASSWORD
+  # Mongodb service
+  mongo_db:
+    container_name: mongodb
+    image: mongo:latest
+    restart: always
     ports:
       - $MONGODB_LOCAL_PORT:$MONGODB_DOCKER_PORT
     volumes:
-      - db:/data/db
-  app:
-    depends_on:
-      - mongodb
-    build: $CONTRACT_API
-    restart: unless-stopped
-    env_file: ./.env
+      - mongo_data:/data/db
+
+  # Node api service
+  api:
+    build: .
     ports:
+      # local->container
       - $GO_LOCAL_PORT:$GO_DOCKER_PORT
     environment:
-      - DB_HOST=mongodb
-      - DB_USER=$DB_USER
-      - DB_PASSWORD=$DB_PASSWORD
-      - DB_NAME=$DB_NAME
-      - DB_PORT=$MONGODB_DOCKER_PORT
-    stdin_open: true
-    tty: true
+      PORT: $GO_DOCKER_PORT
+      DB_HOST: mongodb
+      DB_USER: $DB_USER
+      DB_PASSWORD: $DB_PASSWORD
+      DB_NAME: $DB_NAME
+      MONGODB_URI: mongodb://mongo_db:27017
+    depends_on:
+      - mongo_db
+
 volumes:
-  db:
+  mongo_data: {}
