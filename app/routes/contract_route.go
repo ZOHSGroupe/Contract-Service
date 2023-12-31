@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func UserRoute(router *gin.Engine) {
+func ContractRoute(router *gin.Engine) {
 	router.POST("/contract", controllers.CreateContract())
 	router.GET("/contract/:id", controllers.GetAContract())
 	router.DELETE("/contract/:id", controllers.DeleteAContract())
