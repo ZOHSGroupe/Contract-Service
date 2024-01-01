@@ -5,7 +5,7 @@ Contract-Service is an Application Programming Interface (API) to handle add,upd
 ```bash
 # install requirements
 $ go get -u github.com/gin-gonic/gin go.mongodb.org/mongo-driver/mongo github.com/joho/godotenv github.com/go-playground/validator/v10 github.com/klauspost/compress@v1.16.3 github.com/bytedance/sonic github.com/dgrijalva/jwt-go
-```
+``` 
 ## Running the app : 
 ```bash
 # Run application
@@ -26,6 +26,90 @@ $ docker run -p 5000:5000 contract-service
 # Run docker compose
 $ docker compose up
 ```
+
+## Models
+
+### Client
+
+- `Firstname: string` - First name of the client.
+- `Lastname: string` - Last name of the client.
+- `Email: string` - Email address of the client.
+- `City: string` - City of the client.
+- `BirthDate: string` - Birth date of the client.
+- `Gender: string` - Gender of the client.
+- `Nationality: string` - Nationality of the client.
+- `Address: string` - Address of the client.
+- `NationalId: string` - National ID of the client.
+
+### Vihecule
+
+- `CurrentValue: string` (required) - Current value of the vehicle.
+- `CylinderCount: string` (required) - Cylinder count of the vehicle.
+- `EmptyWeight: string` (required) - Empty weight of the vehicle.
+- `FuelType: string` (required) - Fuel type of the vehicle.
+- `Genre: string` (required) - Genre of the vehicle.
+- `GrossWeightRating: string` (required) - Gross weight rating of the vehicle.
+- `ManufacturingDate: string` (required) - Manufacturing date of the vehicle.
+- `Marque: string` (required) - Marque of the vehicle.
+- `TaxHorsePower: string` (required) - Tax horse power of the vehicle.
+- `Type: string` (required) - Type of the vehicle.
+- `IdentificationNumber: string` (required) - Identification number of the vehicle.
+
+### Permit
+
+- `IssueDate: string` (required) - Issue date of the permit.
+- `EndDate: string` (required) - End date of the permit.
+- `LicenceNumber: string` (required) - License number of the permit.
+- `Type: string` (required) - Type of the permit.
+
+### Contract
+
+- `StartDate: string` (required) - Start date of the contract.
+- `EndDate: string` (required) - End date of the contract.
+- `Value: string` (required) - Value of the contract.
+- `Client: Client` (required) - Client information.
+- `Vihecule: Vihecule` (required) - Vehicle information.
+- `Permit: Permit` (required) - Permit information.
+
+## Available Endpoints
+
+### CreateContract
+- **Endpoint:** `POST /contract`
+- **Description:** Create a new contract.
+- **Request Body:**
+  - `StartDate: string` (required) - Start date of the contract.
+  - `EndDate: string` (required) - End date of the contract.
+  - `Value: string` (required) - Value of the contract.
+  - `Client: Client` (required) - Client information.
+  - `Vihecule: Vihecule` (required) - Vehicle information.
+  - `Permit: Permit` (required) - Permit information.
+- **Response:**
+  - `201`: Contract created successfully with the ID.
+  - `400`: Bad Request (error in request or validation).
+  - `500`: Internal Server Error.
+
+### GetAContract
+
+- **Endpoint:** `GET /contract/:id`
+- **Description:** Get details of a contract by ID.
+- **Response:**
+  - `200`: Successful retrieval with contract details.
+  - `400`: Bad Request (invalid ID format).
+  - `404`: Contract not found.
+  - `500`: Internal Server Error.
+
+### DeleteAContract
+
+- **Endpoint:** `DELETE /contract/:id`
+- **Description:** Delete a contract by ID.
+- **Response:**
+  - `200`: Contract deleted successfully.
+  - `404`: Contract not found.
+  - `500`: Internal Server Error.
+
+
+
+
 ## Stay in touch :
 - Author - [Ouail Laamiri](https://www.linkedin.com/in/ouaillaamiri/) 
 - Test - [Postman](https://www.postman.com/avionics-meteorologist-32935362/workspace/postman-api-fundamentals-student-expert/collection/29141176-d922c605-2315-488b-850b-e47edeccdaf1?action=share&creator=29141176)
