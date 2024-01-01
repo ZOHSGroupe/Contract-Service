@@ -73,7 +73,7 @@ $ docker compose up
 
 ## Available Endpoints
 
-### CreateContract
+### 1.CreateContract
 - **Endpoint:** `POST /contract`
 - **Description:** Create a new contract.
 - **Request Body:**
@@ -88,7 +88,7 @@ $ docker compose up
   - `400`: Bad Request (error in request or validation).
   - `500`: Internal Server Error.
 
-### GetAContract
+### 2.GetAContract
 
 - **Endpoint:** `GET /contract/:id`
 - **Description:** Get details of a contract by ID.
@@ -98,7 +98,7 @@ $ docker compose up
   - `404`: Contract not found.
   - `500`: Internal Server Error.
 
-### DeleteAContract
+### 3.DeleteAContract
 
 - **Endpoint:** `DELETE /contract/:id`
 - **Description:** Delete a contract by ID.
