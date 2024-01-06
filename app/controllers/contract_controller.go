@@ -341,3 +341,37 @@ func CheckContractValidityByViheculeIdentificationNumber() gin.HandlerFunc {
 		})
 	}
 }
+
+func GetValiditContractOfViheculeByIdentificationNumber() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		identificationNumber := c.Param("identificationNumber") // Assuming the parameter is part of the URL path
+
+		// Validate identificationNumber if needed
+
+		// Helper function to check contract validity
+		isValid, err := findValidContractByViheculeIdentificationNumber(c.Request.Context(), identificationNumber)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.ContractResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "error",
+				Data:    map[string]interface{}{"data": err.Error()},
+			})
+			return
+		}
+
+		// Response with validity status
+		if isValid == nil {
+			c.JSON(http.StatusOK, responses.ContractResponse{
+				Status:  http.StatusNotFound,
+				Message: "success",
+				Data:    map[string]interface{}{"error": "this vihecule dont have any valid contract"},
+			})
+			return
+		}
+		c.JSON(http.StatusOK, responses.ContractResponse{
+			Status:  http.StatusOK,
+			Message: "success",
+			Data:    map[string]interface{}{"contract": isValid},
+		})
+	}
+}

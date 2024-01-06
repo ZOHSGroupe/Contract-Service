@@ -88,7 +88,15 @@ $ docker compose up
   - `400`: Bad Request (error in request or validation).
   - `500`: Internal Server Error.
 
-### 2.GetAContract
+### 2. GetAllContracts
+
+- **Endpoint**: `GET /contract`
+- **Description**: Get all contracts.
+- **Response**:
+  - `200`: Successful retrieval with a list of contracts.
+  - `500`: Internal Server Error.
+
+### 3.GetAContract
 
 - **Endpoint:** `GET /contract/:id`
 - **Description:** Get details of a contract by ID.
@@ -98,7 +106,7 @@ $ docker compose up
   - `404`: Contract not found.
   - `500`: Internal Server Error.
 
-### 3.DeleteAContract
+### 4.DeleteAContract
 
 - **Endpoint:** `DELETE /contract/:id`
 - **Description:** Delete a contract by ID.
@@ -107,7 +115,40 @@ $ docker compose up
   - `404`: Contract not found.
   - `500`: Internal Server Error.
 
+### 5. GetContractsByNationalID
 
+- **Endpoint**: `GET /contract/client/:nationalId`
+- **Description**: Get contracts by client's national ID.
+- **Response**:
+  - `200`: Successful retrieval with a list of contracts.
+  - `404`: No contracts found with the given national ID.
+  - `500`: Internal Server Error.
+
+### 6. GetContractsByVehicleIdentificationNumber
+
+- **Endpoint**: `GET /contract/vihecule/:identificationNumber`
+- **Description**: Get contracts by vehicle identification number.
+- **Response**:
+  - `200`: Successful retrieval with a list of contracts.
+  - `404`: No contracts found with the given vehicle identification number.
+  - `500`: Internal Server Error.
+
+### 7. CheckContractValidityByViheculeIdentificationNumber
+
+- **Endpoint**: `GET /contract/validity/:identificationNumber`
+- **Description**: Check the validity of contracts by vehicle identification number.
+- **Response**:
+  - `200`: Successful retrieval with the validity status.
+  - `500`: Internal
+
+  ### 8. GetValiditContractOfViheculeByIdentificationNumber
+
+- **Endpoint**: `GET /contract/valid/:identificationNumber`
+- **Description**: Get a valid contract of vehicle by identification number.
+- **Response**:
+  - `200`: Successful retrieval with the contract.
+  - `404`: No contracts valid found with the given vehicle identification number.
+  - `500`: Internal
 
 
 ## Stay in touch :
@@ -117,4 +158,4 @@ $ docker compose up
 
 ## License
 
-Contract-Service is [MIT licensed](LICENSE).
+Contract-Service is [GPL licensed]().
