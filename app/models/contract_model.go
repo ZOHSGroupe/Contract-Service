@@ -39,7 +39,7 @@ type Permit struct {
 
 type Contract struct {
 	//ID        primitive.ObjectID `json:"id,omitempty"`
-	StartDate string   `json:"start_date,omitempty" validate:"required,datetime=2006-01-02"`
+	StartDate string   `json:"start_date,omitempty" `
 	EndDate   string   `json:"end_date,omitempty" validate:"required,datetime=2006-01-02"`
 	Value     string   `json:"value,omitempty" validate:"required"`
 	Client    Client   `json:"client,omitempty"`

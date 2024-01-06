@@ -5,35 +5,88 @@ import (
 	"Contract-Service/app/models"
 	"Contract-Service/app/responses"
 	"context"
+	"net/http"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"net/http"
-	"time"
 )
 
 var contractCollection *mongo.Collection = configs.GetCollection(configs.DB, "contract")
 var validate = validator.New()
 
+func GetAllContracts() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		// Fetch all contracts from the collection
+		cursor, err := contractCollection.Find(ctx, bson.M{})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.ContractResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+			return
+		}
+		defer cursor.Close(ctx)
+
+		var contracts []models.Contract
+		if err := cursor.All(ctx, &contracts); err != nil {
+			c.JSON(http.StatusInternalServerError, responses.ContractResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+			return
+		}
+
+		c.JSON(http.StatusOK, responses.ContractResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"contracts": contracts}})
+	}
+}
+
 func CreateContract() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		var contract models.Contract
 		defer cancel()
 
-		//validate the request body
+		var contract models.Contract
+
+		// Validate the request body
 		if err := c.BindJSON(&contract); err != nil {
 			c.JSON(http.StatusBadRequest, responses.ContractResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
 			return
 		}
 
-		// use the validator library to validate required fields
+		// Use the validator library to validate required fields
 		if validationErr := validate.Struct(&contract); validationErr != nil {
 			c.JSON(http.StatusBadRequest, responses.ContractResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": validationErr.Error()}})
 			return
 		}
+
+		// Check if a valid contract with the same Vihecule IdentificationNumber exists
+		existingContract, err := findValidContractByViheculeIdentificationNumber(ctx, contract.Vihecule.IdentificationNumber)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.ContractResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+			return
+		}
+
+		if existingContract != nil {
+			c.JSON(http.StatusBadRequest, responses.ContractResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "A valid contract with the same Vihecule IdentificationNumber already exists"}})
+			return
+		}
+
+		// Check if the contract's EndDate is less than the current date
+		endDate, err := time.Parse("2006-01-02", contract.EndDate)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.ContractResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+			return
+		}
+
+		currentDate := time.Now().UTC()
+
+		if endDate.Before(currentDate) {
+			c.JSON(http.StatusBadRequest, responses.ContractResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Contract EndDate must be greater than or equal to the current date"}})
+			return
+		}
+		// Set StartDate to the current date with the specified format
+		contract.StartDate = time.Now().UTC().Format("2006-01-02")
 
 		newContract := models.Contract{
 			StartDate: contract.StartDate,
@@ -70,6 +123,7 @@ func CreateContract() gin.HandlerFunc {
 			},
 		}
 
+		// Insert the new contract into the database
 		result, err := contractCollection.InsertOne(ctx, newContract)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, responses.ContractResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
@@ -86,6 +140,43 @@ func CreateContract() gin.HandlerFunc {
 		// Include the ID in the response
 		c.JSON(http.StatusCreated, responses.ContractResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"id": insertedID.Hex()}})
 	}
+}
+
+// Helper function to find a valid contract by Vihecule IdentificationNumber
+func findValidContractByViheculeIdentificationNumber(ctx context.Context, identificationNumber string) (*models.Contract, error) {
+	cursor, err := contractCollection.Find(ctx, bson.M{"vihecule.identificationnumber": identificationNumber})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var contracts []models.Contract
+	if err := cursor.All(ctx, &contracts); err != nil {
+		return nil, err
+	}
+
+	// Check each contract individually
+	for _, contract := range contracts {
+		// Check if the contract is valid based on your criteria
+		if isValidContract(&contract) {
+			return &contract, nil
+		}
+	}
+
+	// No valid contract found
+	return nil, nil
+}
+
+// Function to check if a contract is valid based on your criteria
+func isValidContract(contract *models.Contract) bool {
+	// Add your validation logic here
+	endDate, err := time.Parse("2006-01-02", contract.EndDate)
+	if err != nil {
+		return false
+	}
+
+	currentDate := time.Now().UTC()
+	return endDate.After(currentDate)
 }
 
 func GetAContract() gin.HandlerFunc {
@@ -153,5 +244,100 @@ func DeleteAContract() gin.HandlerFunc {
 		c.JSON(http.StatusOK,
 			responses.ContractResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": "contract successfully deleted!"}},
 		)
+	}
+
+}
+
+func GetContractsByNationalID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		nationalID := c.Param("nationalId") // Assuming the parameter is part of the URL path
+
+		// Validate nationalID if needed
+
+		// Find all contracts for the given national ID
+		cursor, err := contractCollection.Find(ctx, bson.M{"client.nationalid": nationalID})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.ContractResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+			return
+		}
+		defer cursor.Close(ctx)
+
+		var contracts []models.Contract
+		if err := cursor.All(ctx, &contracts); err != nil {
+			c.JSON(http.StatusInternalServerError, responses.ContractResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+			return
+		}
+
+		// Check if any contracts were found
+		if len(contracts) == 0 {
+			c.JSON(http.StatusNotFound, responses.ContractResponse{Status: http.StatusNotFound, Message: "error", Data: map[string]interface{}{"data": "No contracts found with the given national ID"}})
+			return
+		}
+
+		c.JSON(http.StatusOK, responses.ContractResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"contracts": contracts}})
+	}
+}
+
+func GetContractsByVehicleIdentificationNumber() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		identificationNumber := c.Param("identificationNumber") // Assuming the parameter is part of the URL path
+
+		// Validate identificationNumber if needed
+
+		// Find all contracts for the given vehicle identification number
+		cursor, err := contractCollection.Find(ctx, bson.M{"vihecule.identificationnumber": identificationNumber})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.ContractResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+			return
+		}
+		defer cursor.Close(ctx)
+
+		var contracts []models.Contract
+		if err := cursor.All(ctx, &contracts); err != nil {
+			c.JSON(http.StatusInternalServerError, responses.ContractResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+			return
+		}
+
+		// Check if any contracts were found
+		if len(contracts) == 0 {
+			c.JSON(http.StatusNotFound, responses.ContractResponse{Status: http.StatusNotFound, Message: "error", Data: map[string]interface{}{"data": "No contracts found with the given identification number"}})
+			return
+		}
+
+		c.JSON(http.StatusOK, responses.ContractResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"contracts": contracts}})
+	}
+}
+
+// CheckContractValidityByViheculeIdentificationNumber checks the validity of a contract based on the Vihecule IdentificationNumber
+func CheckContractValidityByViheculeIdentificationNumber() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		identificationNumber := c.Param("identificationNumber") // Assuming the parameter is part of the URL path
+
+		// Validate identificationNumber if needed
+
+		// Helper function to check contract validity
+		isValid, err := findValidContractByViheculeIdentificationNumber(c.Request.Context(), identificationNumber)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, responses.ContractResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "error",
+				Data:    map[string]interface{}{"data": err.Error()},
+			})
+			return
+		}
+
+		// Response with validity status
+		condition := isValid != nil
+		c.JSON(http.StatusOK, responses.ContractResponse{
+			Status:  http.StatusOK,
+			Message: "success",
+			Data:    map[string]interface{}{"validity": condition},
+		})
 	}
 }
