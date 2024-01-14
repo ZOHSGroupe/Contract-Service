@@ -158,4 +158,4 @@ $ docker compose up
 
 ## License
 
-Contract-Service is [GPL licensed]().
+Contract-Service is [GPL licensed](LICENSE).
