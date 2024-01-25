@@ -26,6 +26,16 @@ services:
       MONGODB_URI: mongodb://mongo_db:27017
     depends_on:
       - mongo_db
+      - eureka_server
+
+  # Eureka server
+  eureka_server:
+    image: netflixoss/eureka
+    ports:
+      - 8761:8761
 
 volumes:
   mongo_data: {}
+
+  # local->container
+
