@@ -29,10 +29,19 @@ services:
       - eureka_server
 
   # Eureka server
-  eureka_server:
-    image: netflixoss/eureka
+  discovery-service:
+    image: eureka:latest
+    container_name: eureka
     ports:
-      - 8761:8761
+      - "8761:8761"
+  API-GATEWAY-SERVICE:
+    image: api-gateway:latest
+    container_name: api-gateway
+    ports:
+      - "8081:8081"
+    depends_on:
+      - discovery-service
+      - api
 
 volumes:
   mongo_data: {}
