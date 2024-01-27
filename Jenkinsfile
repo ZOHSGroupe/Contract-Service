@@ -7,7 +7,7 @@ pipeline {
         // Customize these variables based on your project
         DOCKER_HUB_REPO = 'ouail02/contract-service'
         SPRING_PROFILES_ACTIVE = 'production'
-        BRANCH = 'main'
+        BRANCH = 'Main1.0'
         Git_REPO = 'https://github.com/ZOHSGroupe/Contract-Service'
     }
 
